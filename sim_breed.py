@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 '''
 This script is to simulate Pokemon breeding with Destiny Knot.
-With Destiny Knot, 5 IVs from the parents will be passed down(with replacement),
+With Destiny Knot, 5 IVs from the parents will be passed down,
 and the rest will be random.
 '''
 import random
@@ -20,27 +20,39 @@ random.seed()
 father=Pokemon([31,31,2,31,31,31])
 mother=Pokemon([22,31,31,31,31,31])
 
-# gather parents IVs
-ivs=father.iv
-ivs.extend(mother.iv)
-
 # the desired IVs spread for the child
 prefer_mask=[1,1,1,0,1,1]
 
 hit_count=0
 num_repeat=500
-
+mode=1
 # run the simulation and write the result in file
 with open("breeding-"+time.strftime("%Y-%m-%d-%H-%M-%S")+".txt","w+") as f:
     for n in range(0,num_repeat):
-        # pick 5 random index of parents IVs with replacement
-        picks=random.choices(list(range(0,12)),k=5)
-
         new_ivs=[-1 for i in range(0,6)]
+        # pick 5 random index of parents IVs with replacement
+        # e.g. the same stats from one parent can overwrite the one
+        # picked from the other parent earlier
+        if mode==0:
+            picks=random.sample(list(range(0,12)),5)
+            # gather parents IVs
+            ivs=father.iv
+            ivs.extend(mother.iv)
+            # elements in picks are the indexes of elements to pick from ivs
+            for i in range(0,len(picks)):
+                new_ivs[picks[i]%6]=ivs[picks[i]]
 
-        # elements in picks are the indexes of elements to pick from ivs
-        for i in range(0,len(picks)):
-            new_ivs[picks[i]%6]=ivs[picks[i]]
+        # without replacement
+        elif mode==1:
+            picks=random.sample(list(range(0,6)),5)
+
+            # for the selected stas, get the iv from one of the parents
+            for i in range(0,len(picks)):
+                p_mask=random.randint(0,1)
+                if p_mask==1:
+                    new_ivs[picks[i]]=father.iv[picks[i]]
+                elif p_mask==0:
+                    new_ivs[picks[i]]=mother.iv[picks[i]]
 
         # get random ivs for stats that are not passed down from parent
         for j in range(0,len(new_ivs)):
